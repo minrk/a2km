@@ -74,11 +74,10 @@ class AssitantToTheKernelManager
       c.action do |args, options|
         from = args.shift
         to = args.shift
-        
         kernel = get_kernel(from)
-        src = from['resources_dir']
+        src = kernel['resources_dir']
         
-        dst = File.join File.dirname(src), to_name
+        dst = File.join File.dirname(src), to
         if File.exists? dst
           STDERR.puts "Destination already exists: #{dst}"
           exit(-1)
@@ -118,6 +117,7 @@ class AssitantToTheKernelManager
         kernelspec = get_kernel_json(name)
         kernelspec['argv'] += args
         save_kernel_json(name, kernelspec)
+        puts "New argv: #{kernelspec['argv'].join(' ')}"
       end
     end
     
@@ -137,17 +137,54 @@ class AssitantToTheKernelManager
         argv = kernelspec['argv']
         argv.reject! { |arg| to_remove.include? arg }
         save_kernel_json(name, kernelspec)
+        puts "New argv: #{argv.join(' ')}"
       end
     end
 
     command :"add-env" do |c|
       c.syntax = 'a2km add-env <spec> <key=value> [key=value] ...'
-      c.description = 'Add environment variables to a kernelspec [NOT IMPLEMENTED]'
+      c.description = 'Add environment variables to a kernelspec.' \
+        ' If no value is given, the value from the current env is used.'
       c.action do |args, options|
-        throw NotImplementedError
+        name = args.shift
+        spec = get_kernel_json(name)
+        if not spec.has_key? 'env'
+          spec['env'] = {}
+        end
+        env = spec['env']
+        args.each do |arg|
+          key_value = arg.split('=', 2)
+          key = key_value.first
+          if key_value.length == 2
+            value = key_value[1]
+          else
+            value = ENV[key]
+          end
+          env[key] = value
+        end
+        save_kernel_json(name, spec)
+        puts "New env: #{env}"
       end
     end
     
+    command :"rm-env" do |c|
+      c.syntax = 'a2km rm-env <spec> <key> [key] ...'
+      c.description = 'Remove environment variables from a kernelspec.'
+      c.action do |args, options|
+        name = args.shift
+        spec = get_kernel_json(name)
+        if not spec.has_key? 'env'
+          spec['env'] = {}
+        end
+        env = spec['env']
+        args.each do |arg|
+          env.delete(arg)
+        end
+        save_kernel_json(name, spec)
+        puts "New env: #{env}"
+      end
+    end
+
     command :rm do |c|
       c.syntax = 'a2km rm <spec>'
       c.description = 'Remove a kernelspec'
