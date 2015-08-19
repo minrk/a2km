@@ -70,17 +70,35 @@ class AssitantToTheKernelManager
     
     command :rename do |c|
       c.syntax = 'a2km rename <from> <to>'
-      c.description = 'renames kernelspec FROM to TO [Not Implemented]'
+      c.description = 'renames kernelspec FROM to TO'
       c.action do |args, options|
-        throw NotImplementedError
+        from = args.shift
+        to = args.shift
+        
+        kernel = get_kernel(from)
+        src = from['resources_dir']
+        
+        dst = File.join File.dirname(src), to_name
+        if File.exists? dst
+          STDERR.puts "Destination already exists: #{dst}"
+          exit(-1)
+        end
+        
+        puts "Moving #{src} → #{dst}"
+        FileUtils.mv src, dst
       end
     end
     
     command :show do |c|
       c.syntax = 'a2km show <spec>'
-      c.description = 'Show info about a kernelspec [Not Implemented]'
+      c.description = 'Show info about a kernelspec'
       c.action do |args, options|
-        throw NotImplementedError
+        name = args.first
+        kernel = get_kernel(name)
+        spec = kernel['spec']
+        puts "Kernel: #{name} (#{spec['display_name']})"
+        puts "  path: #{kernel['resources_dir']}"
+        puts "  argv: #{spec['argv'].join(' ')}"
       end
     end
     
@@ -153,9 +171,22 @@ class AssitantToTheKernelManager
     
     command :set do |c|
       c.syntax = 'a2km set <name> <key> <value>'
-      c.description = 'Set a value in the kernelspec [NOT IMPLEMENTED]'
+      c.description = 'Set a value in the kernelspec'
+      c.examples = [
+        'a2km set python3 display_name "My Python 3"'
+      ]
       c.action do |args, options|
-        throw NotImplementedError
+        name = args.shift
+        key = args.shift
+        value = args.shift
+        if value.nil?
+          STDERR.puts c.syntax
+          exit(-1)
+        end
+        puts "Setting #{name}.#{key} = '#{value}'"
+        spec = get_kernel_json(name)
+        spec[key] = value
+        save_kernel_json(name, spec)
       end
     end
     
