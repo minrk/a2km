@@ -2,8 +2,6 @@
 
 Utility for working with [Jupyter](https://jupyter.org) kernelspecs.
 
-![Assistant TO the Kernel Manager](http://i.imgur.com/F0WLaYR.jpg)
-
 
 ## Install
 
@@ -32,3 +30,6 @@ Utility for working with [Jupyter](https://jupyter.org) kernelspecs.
     rm-env   Remove environment variables from a kernelspec
     set      Set a value in the kernelspec
     show     Show info about a kernelspec
+
+
+![Assistant TO the Kernel Manager](http://i.imgur.com/F0WLaYR.jpg)
