@@ -1,0 +1,163 @@
+#!/usr/bin/env ruby
+
+require 'json'
+
+require 'rubygems'
+require 'commander'
+require 'highline'
+
+class AssitantToTheKernelManager
+  include Commander::Methods
+  
+  def list_kernels
+    js = JSON.parse `jupyter kernelspec list --json`
+    js['kernelspecs']
+  end
+
+  def kernel_dirs
+    paths = JSON.parse `jupyter --paths --json`
+    paths['data'].map do |p|
+      p + '/' + 'kernels'
+    end
+  end
+  
+  def user_kernel_dir
+    kernel_dirs.first
+  end
+  
+  def run
+    program :name, 'Assistant to the KernelManager'
+    program :version, '0.0.0'
+    program :description, 'Work with Jupyter kernelspecs'
+    
+    command :rename do |c|
+      c.syntax = 'a2km rename <from> <to>'
+      c.description = 'renames kernelspec FROM to TO'
+      c.action do |args, options|
+        throw NotImplementedError
+      end
+    end
+    
+    command :show do |c|
+      c.syntax = 'a2km show <spec>'
+      c.description = 'Show info about a kernelspec'
+      c.action do |args, options|
+        throw NotImplementedError
+      end
+    end
+    
+    command :"add-argv" do |c|
+      c.syntax = 'a2km add-argv <spec> <arg1> [arg2] ...'
+      c.description = 'Add argument(s) to a kernelspec launch command'
+      c.action do |args, options|
+        throw NotImplementedError
+      end
+    end
+    command :"rm-argv" do |c|
+      c.syntax = 'a2km rm-argv <spec> <arg1> [arg2] ...'
+      c.description = 'Remove arguments from a kenrelspec launch command'
+      c.action do |args, options|
+        throw NotImplementedError
+      end
+    end
+
+    command :"add-env" do |c|
+      c.syntax = 'a2km add-env <spec> <key=value> [key=value] ...'
+      c.description = 'Add environment variables to a kernelspec'
+      c.action do |args, options|
+        throw NotImplementedError
+      end
+    end
+    
+    command :rm do |c|
+      c.syntax = 'a2km rm <spec>'
+      c.description = 'Remove a kernelspec'
+      c.option '-f', "Force removal (skip confirmation)"
+      c.action do |args, options|
+        kernels = list_kernels
+        name = args.shift
+        if not kernels.has_key? name
+          STDERR.puts "No such kernel: #{name}"
+          STDERR.puts "Found kernels: #{kernels.keys.sort.join(' ')}"
+          exit(-1)
+        end
+        path = kernels[name]['resources_dir']
+        if options.f or not HighLine.agree("Permanently delete #{path}? (yes/no)")
+          STDERR.puts "Aborting."
+          exit(-1)
+        end
+        puts "Removing #{path}"
+        FileUtils.rm_r path
+      end
+    end
+    
+    command :set do |c|
+      c.syntax = 'a2km set <name> <key> <value>'
+      c.description = 'Set a value in the kernelspec'
+      c.action do |args, options|
+        throw NotImplementedError
+      end
+    end
+    
+    command :clone do |c|
+      c.syntax = 'a2km clone <from> <to> [display_name]'
+      c.summary = 'Clone a kernelspec'
+      c.description = 'Clones kernelspec FROM to TO'
+      c.option '--user', 'Force clone to be in the user directory' \
+        ' (default is to use the same directory as FROM)'
+      c.action do |args, options|
+        options.default :user => false
+        
+        if args.length < 2 or args.length > 3
+          STDERR.puts "Must specify FROM and TO"
+          exit(-1)
+        end
+        from_name = args.shift
+        to_name = args.shift
+        if args.length > 0
+          display_name = args.shift
+        else
+          display_name = to_name
+        end
+        puts to_name, display_name
+        
+        kernels = list_kernels
+        if not kernels.has_key? from_name
+          STDERR.puts "No such kernel: #{from_name}"
+          STDERR.puts "Found kernels: #{kernels.keys.sort.join(' ')}"
+          exit(-1)
+        end
+        from = kernels[from_name]
+        src = from['resources_dir']
+        
+        if options.user?
+          dst_dir = user_kernel_dir
+          makedirs(dst_dir)
+        else
+          dst_dir = File.dirname src
+        end
+        dst = File.join dst_dir, to_name
+        if File.exists? dst
+          STDERR.puts "Destination already exists: #{dst}"
+          exit(-1)
+        end
+        
+        puts "Cloning #{src} → #{dst}"
+        FileUtils.cp_r src, dst
+        kernel_json = File.join(dst, 'kernel.json')
+        kernelspec = File.open(kernel_json) do |f|
+          JSON.parse(f.read())
+        end
+        kernelspec['display_name'] = display_name
+        File.open(kernel_json, 'w') do |f|
+          f.write(JSON.pretty_generate(kernelspec))
+        end
+      end
+    end
+
+    run!
+  end
+end
+
+
+AssitantToTheKernelManager.new.run
