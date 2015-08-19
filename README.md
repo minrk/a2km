@@ -18,3 +18,17 @@ Utility for working with [Jupyter](https://jupyter.org) kernelspecs.
     a2km add-argv python3-copy -- --debug
     # <debug some stuff>
     a2km rm-argv python3-copy -- debug
+
+## Commands
+
+    add-argv Add argument(s) to a kernelspec launch command
+    add-env  Add environment variables to a kernelspec
+    clone    Clone a kernelspec
+    help     Display global or [command] help documentation
+    locate   Print the path of a kernelspec
+    rename   Renames kernelspec FROM to TO
+    rm       Remove a kernelspec
+    rm-argv  Remove arguments from a kernelspec launch command
+    rm-env   Remove environment variables from a kernelspec
+    set      Set a value in the kernelspec
+    show     Show info about a kernelspec

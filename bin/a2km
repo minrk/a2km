@@ -70,7 +70,8 @@ class AssitantToTheKernelManager
     
     command :rename do |c|
       c.syntax = 'a2km rename <from> <to>'
-      c.description = 'renames kernelspec FROM to TO'
+      c.summary = 'Rename a kernelspec'
+      c.description = 'Rename kernelspec FROM to TO'
       c.action do |args, options|
         from = args.shift
         to = args.shift
@@ -143,6 +144,7 @@ class AssitantToTheKernelManager
 
     command :"add-env" do |c|
       c.syntax = 'a2km add-env <spec> <key=value> [key=value] ...'
+      c.summary = 'Add environment variables to a kernelspec'
       c.description = 'Add environment variables to a kernelspec.' \
         ' If no value is given, the value from the current env is used.'
       c.action do |args, options|
@@ -169,7 +171,7 @@ class AssitantToTheKernelManager
     
     command :"rm-env" do |c|
       c.syntax = 'a2km rm-env <spec> <key> [key] ...'
-      c.description = 'Remove environment variables from a kernelspec.'
+      c.description = 'Remove environment variables from a kernelspec'
       c.action do |args, options|
         name = args.shift
         spec = get_kernel_json(name)
