@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'a2km'
-  s.version     = '0.0.0'
+  s.version     = '0.0.1'
   s.date        = '2015-08-18'
   s.summary     = 'Assistant to the Kernel Manager'
   s.description = 'Working with Juptyer kernels'
