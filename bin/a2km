@@ -65,7 +65,7 @@ class AssitantToTheKernelManager
   
   def run
     program :name, 'Assistant to the KernelManager'
-    program :version, '0.0.1-dev'
+    program :version, '0.0.1'
     program :description, 'Work with Jupyter kernelspecs'
     
     command :rename do |c|

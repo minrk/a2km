@@ -26,7 +26,7 @@ Utility for working with [Jupyter](https://jupyter.org) kernelspecs.
     clone    Clone a kernelspec
     help     Display global or [command] help documentation
     locate   Print the path of a kernelspec
-    rename   Renames kernelspec FROM to TO
+    rename   Rename a kernelspec
     rm       Remove a kernelspec
     rm-argv  Remove arguments from a kernelspec launch command
     rm-env   Remove environment variables from a kernelspec
