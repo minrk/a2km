@@ -6,14 +6,22 @@ require 'rubygems'
 require 'commander'
 require 'highline'
 
+
 class AssitantToTheKernelManager
   include Commander::Methods
   
-  def list_kernels
-    js = JSON.parse `jupyter kernelspec list --json`
-    js['kernelspecs']
+  def initialize
+    @kernels = nil
   end
-
+  
+  def kernels
+    if @kernels.nil?
+      js = JSON.parse `jupyter kernelspec list --json`
+      @kernels = js['kernelspecs']
+    end
+    @kernels
+  end
+  
   def kernel_dirs
     paths = JSON.parse `jupyter --paths --json`
     paths['data'].map do |p|
@@ -25,6 +33,36 @@ class AssitantToTheKernelManager
     kernel_dirs.first
   end
   
+  def get_kernel(name)
+    "Get a kernel by name. Die with message if not found."
+    if not kernels.has_key? name
+      STDERR.puts "No such kernel: #{name}"
+      STDERR.puts "Found kernels: #{kernels.keys.sort.join(' ')}"
+      exit(-1)
+    end
+    kernels[name]
+  end
+  
+  def kernel_json_path(name)
+    "Return path to a kernel's kernel.json"
+    kernel = get_kernel(name)
+    File.join(kernel['resources_dir'], 'kernel.json')
+  end
+  
+  def get_kernel_json(name)
+    "Return kernel.json contents for a given kernelspec"
+    File.open(kernel_json_path(name)) do |f|
+      return JSON.parse f.read
+    end
+  end
+  
+  def save_kernel_json(name, data)
+    "save new kernel JSON"
+    File.open(kernel_json_path(name), 'w') do |f|
+      f.write JSON.pretty_generate(data)
+    end
+  end
+  
   def run
     program :name, 'Assistant to the KernelManager'
     program :version, '0.0.0'
@@ -32,7 +70,7 @@ class AssitantToTheKernelManager
     
     command :rename do |c|
       c.syntax = 'a2km rename <from> <to>'
-      c.description = 'renames kernelspec FROM to TO'
+      c.description = 'renames kernelspec FROM to TO [Not Implemented]'
       c.action do |args, options|
         throw NotImplementedError
       end
@@ -40,9 +78,17 @@ class AssitantToTheKernelManager
     
     command :show do |c|
       c.syntax = 'a2km show <spec>'
-      c.description = 'Show info about a kernelspec'
+      c.description = 'Show info about a kernelspec [Not Implemented]'
       c.action do |args, options|
         throw NotImplementedError
+      end
+    end
+    
+    command :locate do |c|
+      c.syntax = 'a2km locate <spec>'
+      c.description = 'Print the path of a kernelspec'
+      c.action do |args, options|
+        puts get_kernel(args.first)['resources_dir']
       end
     end
     
@@ -50,20 +96,35 @@ class AssitantToTheKernelManager
       c.syntax = 'a2km add-argv <spec> <arg1> [arg2] ...'
       c.description = 'Add argument(s) to a kernelspec launch command'
       c.action do |args, options|
-        throw NotImplementedError
+        name = args.shift
+        kernelspec = get_kernel_json(name)
+        kernelspec['argv'] += args
+        save_kernel_json(name, kernelspec)
       end
     end
+    
     command :"rm-argv" do |c|
       c.syntax = 'a2km rm-argv <spec> <arg1> [arg2] ...'
-      c.description = 'Remove arguments from a kenrelspec launch command'
+      c.summary = 'Remove arguments from a kernelspec launch command'
+      c.description = c.summary + ". To remove args starting with '-'," \
+        " use '--'."
+      c.examples = [
+        "a2km rm-argv myspec x",
+        "a2km rm-argv myspec -- --debug",
+      ]
       c.action do |args, options|
-        throw NotImplementedError
+        name = args.shift
+        to_remove = args
+        kernelspec = get_kernel_json(name)
+        argv = kernelspec['argv']
+        argv.reject! { |arg| to_remove.include? arg }
+        save_kernel_json(name, kernelspec)
       end
     end
 
     command :"add-env" do |c|
       c.syntax = 'a2km add-env <spec> <key=value> [key=value] ...'
-      c.description = 'Add environment variables to a kernelspec'
+      c.description = 'Add environment variables to a kernelspec [NOT IMPLEMENTED]'
       c.action do |args, options|
         throw NotImplementedError
       end
@@ -74,7 +135,6 @@ class AssitantToTheKernelManager
       c.description = 'Remove a kernelspec'
       c.option '-f', "Force removal (skip confirmation)"
       c.action do |args, options|
-        kernels = list_kernels
         name = args.shift
         if not kernels.has_key? name
           STDERR.puts "No such kernel: #{name}"
@@ -93,7 +153,7 @@ class AssitantToTheKernelManager
     
     command :set do |c|
       c.syntax = 'a2km set <name> <key> <value>'
-      c.description = 'Set a value in the kernelspec'
+      c.description = 'Set a value in the kernelspec [NOT IMPLEMENTED]'
       c.action do |args, options|
         throw NotImplementedError
       end
@@ -119,14 +179,8 @@ class AssitantToTheKernelManager
         else
           display_name = to_name
         end
-        puts to_name, display_name
         
-        kernels = list_kernels
-        if not kernels.has_key? from_name
-          STDERR.puts "No such kernel: #{from_name}"
-          STDERR.puts "Found kernels: #{kernels.keys.sort.join(' ')}"
-          exit(-1)
-        end
+        from = get_kernel(from_name)
         from = kernels[from_name]
         src = from['resources_dir']
         
@@ -146,11 +200,11 @@ class AssitantToTheKernelManager
         FileUtils.cp_r src, dst
         kernel_json = File.join(dst, 'kernel.json')
         kernelspec = File.open(kernel_json) do |f|
-          JSON.parse(f.read())
+          JSON.parse f.read
         end
         kernelspec['display_name'] = display_name
         File.open(kernel_json, 'w') do |f|
-          f.write(JSON.pretty_generate(kernelspec))
+          f.write JSON.pretty_generate(kernelspec)
         end
       end
     end
@@ -158,6 +212,5 @@ class AssitantToTheKernelManager
     run!
   end
 end
-
 
 AssitantToTheKernelManager.new.run
