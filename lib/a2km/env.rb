@@ -59,13 +59,10 @@ END
       in_env(env, "python -c 'import ipykernel; print(ipykernel.__version__)'", kind: kind)
     end
 
-    def make_kernel_exe(kernel_name, env_name, kind: 'conda', prefix: '/usr/local')
+    def make_kernel_exe(kernel_name, env_name, kind: 'conda')
+      path = A2KM.get_kernel(kernel_name)['resources_dir']
       cmd = kernel_script(env_name, kind: kind)
-      bin = File.join(prefix, 'bin')
-      if not File.directory? bin
-        FileUtils.mkdir bin
-      end
-      kernel_exe = File.join(bin, "jupyter-kernel-#{kernel_name}")
+      kernel_exe = File.join(path, "jupyter-kernel-#{kernel_name}")
       puts "Making executable '#{kernel_exe}'"
       
       File.open(kernel_exe, 'w') do |f|
@@ -80,13 +77,10 @@ END
     end
   end
 
-  def self.make_env_kernel(kernel_name, env_name, kind: 'conda', prefix: '/usr/local', user: true)
-    prefix = File.expand_path(prefix)
+  def self.make_env_kernel(kernel_name, env_name, kind: 'conda', user: true)
     v = ENV_UTILS.ipykernel_version(env_name, kind: kind)
     
     puts "Found ipykernel-#{v}"
-    
-    exe = ENV_UTILS.make_kernel_exe(kernel_name, env_name, kind: kind, prefix: prefix)
     if user
       user_arg = '--user'
     else
@@ -94,6 +88,8 @@ END
     end
     
     ENV_UTILS.in_env(env_name, "python -m ipykernel.kernelspec --name #{kernel_name} #{user_arg}", kind: kind)
+    exe = ENV_UTILS.make_kernel_exe(kernel_name, env_name, kind: kind)
+    
     spec = A2KM.get_kernel_json(kernel_name)
     spec['argv'] = [exe, '-f', '{connection_file}']
     spec['display_name'] = "#{spec['display_name']} (#{kind}:#{env_name})"

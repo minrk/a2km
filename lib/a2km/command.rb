@@ -163,26 +163,24 @@ module A2KM
       end
 
       command :"env-kernel" do |c|
-        c.syntax = 'a2km env-kernel [--venv|--conda] <name> [-e env-name] [--prefix PREFIX] [--user]'
+        c.syntax = 'a2km env-kernel [--venv|--conda] <name> [-e env-name] [--user]'
         c.description = 'Create a kernel from an env (conda or virtualenv)'
         
         c.option '--conda', "use conda env (default)"
         c.option '--venv', "use virtualenv"
         c.option '-e ENV', "specify the environment name to use (if different from <name>)"
-        c.option '--prefix PREFIX', 'specify the prefix for the executable to be installed'
         c.action do |args, options|
           name = args.shift
           options.default :user => false
           options.default :e => name
-          options.default :prefix => '~'
           env = options.e
-
+          
           kind = 'conda'
           if options.venv
             kind = 'venv'
           end
           puts "Making kernel '#{name}' for #{kind}:#{env}"
-          spec = A2KM::make_env_kernel(name, env, kind: kind, prefix: options.prefix)
+          spec = A2KM::make_env_kernel(name, env, kind: kind)
         end
       end
 
@@ -229,7 +227,6 @@ module A2KM
           end
 
           from = A2KM.get_kernel(from_name)
-          from = A2KM.kernels[from_name]
           src = from['resources_dir']
 
           if options.user?
