@@ -1,6 +1,6 @@
 # Copyright Min RK, License: BSD 3-clause
 
-require 'Open3'
+require 'open3'
 require 'liquid'
 
 class ENVError < StandardError
