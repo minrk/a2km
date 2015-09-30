@@ -170,6 +170,7 @@ module A2KM
         c.option '--conda', "use conda env (default)"
         c.option '--venv', "use virtualenv"
         c.option '-e ENV', "specify the environment name to use (if different from <name>)"
+        c.option '--user', "do a user install"
         c.action do |args, options|
           name = args.shift
           options.default :user => false
@@ -181,7 +182,7 @@ module A2KM
             kind = 'venv'
           end
           puts "Making kernel '#{name}' for #{kind}:#{env}"
-          spec = A2KM::make_env_kernel(name, env, kind: kind)
+          spec = A2KM::make_env_kernel(name, env, kind: kind, user: options.user)
         end
       end
 
