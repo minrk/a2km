@@ -1,5 +1,5 @@
 # Copyright Min RK, License: BSD 3-clause
 
 module A2KM
-  VERSION = '0.0.4'
+  VERSION = '0.0.5'
 end
