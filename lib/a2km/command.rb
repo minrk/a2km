@@ -5,6 +5,7 @@ require 'json'
 require 'rubygems'
 require 'commander'
 require 'highline'
+require 'fileutils'
 
 module A2KM
   
@@ -229,9 +230,9 @@ module A2KM
           from = A2KM.get_kernel(from_name)
           src = from['resources_dir']
 
-          if options.user?
+          if options.user
             dst_dir = A2KM.user_kernel_dir
-            makedirs(dst_dir)
+            FileUtils.makedirs(dst_dir)
           else
             dst_dir = File.dirname src
           end
