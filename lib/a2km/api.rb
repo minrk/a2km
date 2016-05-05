@@ -40,7 +40,7 @@ module A2KM
   def A2KM.kernel_json_path(name)
     "Return path to a kernel's kernel.json"
     kernel = get_kernel(name)
-    File.join(kernel['resources_dir'], 'kernel.json')
+    File.join(kernel['resource_dir'], 'kernel.json')
   end
 
   def A2KM.get_kernel_json(name)

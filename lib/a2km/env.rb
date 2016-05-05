@@ -60,7 +60,7 @@ END
     end
 
     def make_kernel_exe(kernel_name, env_name, kind: 'conda')
-      path = A2KM.get_kernel(kernel_name)['resources_dir']
+      path = A2KM.get_kernel(kernel_name)['resource_dir']
       cmd = kernel_script(env_name, kind: kind)
       kernel_exe = File.join(path, "jupyter-kernel-#{kernel_name}")
       puts "Making executable '#{kernel_exe}'"
