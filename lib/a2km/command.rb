@@ -31,7 +31,7 @@ module A2KM
           from = args.shift
           to = args.shift
           kernel = A2KM.get_kernel(from)
-          src = kernel['resources_dir']
+          src = kernel['resource_dir']
 
           dst = File.join File.dirname(src), to
           if File.exists? dst
@@ -52,7 +52,7 @@ module A2KM
           kernel = A2KM.get_kernel(name)
           spec = kernel['spec']
           puts "Kernel: #{name} (#{spec['display_name']})"
-          puts "  path: #{kernel['resources_dir']}"
+          puts "  path: #{kernel['resource_dir']}"
           puts "  argv: #{spec['argv'].join(' ')}"
         end
       end
@@ -61,7 +61,7 @@ module A2KM
         c.syntax = 'a2km locate <spec>'
         c.description = 'Print the path of a kernelspec'
         c.action do |args, options|
-          puts A2KM.get_kernel(args.first)['resources_dir']
+          puts A2KM.get_kernel(args.first)['resource_dir']
         end
       end
 
@@ -153,7 +153,7 @@ module A2KM
             STDERR.puts "Found kernels: #{kernels.keys.sort.join(' ')}"
             exit(-1)
           end
-          path = A2KM.kernels[name]['resources_dir']
+          path = A2KM.kernels[name]['resource_dir']
           if options.f or not HighLine.agree("Permanently delete #{path}? (yes/no)")
             STDERR.puts "Aborting."
             exit(-1)
@@ -229,7 +229,7 @@ module A2KM
           end
 
           from = A2KM.get_kernel(from_name)
-          src = from['resources_dir']
+          src = from['resource_dir']
 
           if options.user
             dst_dir = A2KM.user_kernel_dir
