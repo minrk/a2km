@@ -27,7 +27,7 @@ Source = "https://github.com/minrk/a2km"
 Tracker = "https://github.com/minrk/a2km/issues"
 
 [project.scripts]
-a2km = "a2km.cli:main"
+a2km = "a2km._cli:main"
 
 [project.optional-dependencies]
 test = ["pytest", "pytest-cov"]
@@ -53,6 +53,15 @@ dependencies = { file = "requirements.txt" }
 # only the file-finder
 fallback_version = "0.0.0"
 
+
+[tool.mypy]
+python_version = "3.10"
+platform = "linux"
+ignore_missing_imports = true
+no_implicit_optional = true
+show_error_codes = true
+warn_redundant_casts = true
+warn_unreachable = true
 
 [tool.pytest.ini_options]
 addopts = "--verbose --color=yes --durations=10"
