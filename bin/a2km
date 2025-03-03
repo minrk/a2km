@@ -1,5 +1,0 @@
-#!/usr/bin/env ruby
-
-require File.expand_path('../lib/a2km', __dir__)
-
-A2KM::run
