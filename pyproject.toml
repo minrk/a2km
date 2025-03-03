@@ -1,0 +1,104 @@
+[build-system]
+requires = ["setuptools>=61", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "a2km"
+version = "0.1.0.dev"
+dynamic = ["readme", "dependencies"]
+description = "Assistent to the (Jupyter) Kernel Manager"
+authors = [{ name = "Min RK", email = "benjaminrk@gmail.com" }]
+keywords = ["Jupyter"]
+license = { text = "BSD-3-Clause" }
+requires-python = ">=3.9"
+classifiers = [
+  "Development Status :: 1 - Planning",
+  "Intended Audience :: Developers",
+  "Intended Audience :: System Administrators",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Framework :: Jupyter",
+]
+
+[project.urls]
+Homepage = "https://github.com/minrk/a2km"
+Source = "https://github.com/minrk/a2km"
+Tracker = "https://github.com/minrk/a2km/issues"
+
+[project.scripts]
+a2km = "a2km.cli:main"
+
+[project.optional-dependencies]
+test = ["pytest", "pytest-cov"]
+
+
+[tool.setuptools]
+zip-safe = false
+license-files = ["LICENSE"]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["a2km"]
+namespaces = false
+
+# dynamic sources of metadata in other files
+[tool.setuptools.dynamic]
+readme = { file = "README.md", content-type = "text/markdown" }
+dependencies = { file = "requirements.txt" }
+
+# setuptools_scm needs a section to be present
+[tool.setuptools_scm]
+# we don't actually use setuptools_scm for versions,
+# only the file-finder
+fallback_version = "0.0.0"
+
+
+[tool.pytest.ini_options]
+addopts = "--verbose --color=yes --durations=10"
+testpaths = ["tests"]
+
+[tool.ruff.format]
+
+[tool.ruff.lint]
+ignore = []
+select = [
+  "E9", # syntax
+  "I",  # isort
+  "UP", # pyupgrade
+  "F",  # flake8
+]
+
+# tbump for tagging releases
+[tool.tbump]
+github_url = "https://github.com/minrk/a2km"
+
+[tool.tbump.version]
+current = "0.1.0.dev"
+
+regex = '''
+  (?P<major>\d+)
+  \.
+  (?P<minor>\d+)
+  \.
+  (?P<patch>\d+)
+  (?P<pre>((a|b|rc)\d+)|)
+  \.?
+  (?P<dev>(?<=\.)dev\d*|)
+  '''
+
+[tool.tbump.git]
+message_template = "Bump to {new_version}"
+tag_template = "{new_version}"
+
+# For each file to patch, add a [[tool.tbump.file]] config
+# section containing the path of the file, relative to the
+# pyproject.toml location.
+
+[[tool.tbump.file]]
+src = "pyproject.toml"
+search = 'version = "{current_version}"'
+
+[[tool.tbump.file]]
+src = "a2km/__init__.py"
+search = '__version__ = "{current_version}"'
