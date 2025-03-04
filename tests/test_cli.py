@@ -31,7 +31,7 @@ def cli_test(args, name, called_with=None):
         called_with = None
     else:
         ctx = nullcontext()
-    with ctx, mock.patch(f"a2km.operations.{name}") as mocked:
+    with ctx, mock.patch(f"a2km.operations.{name}", autospec=True) as mocked:
         main(args)
     if called_with is not None:
         if (
