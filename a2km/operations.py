@@ -12,6 +12,8 @@ import sys
 from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
+from subprocess import check_output
+from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Any
 
 from jupyter_core import paths
@@ -52,16 +54,18 @@ def show(kernelspec: _PathLike, json_output: bool = False) -> None:
     print(
         f"Kernel: {kernelspec_path.name} ({spec.get('display_name', '<no display name>')})"
     )
-    print(f"  path: {kernelspec_path})")
+    print(f"  path: {kernelspec_path}")
     print(f"  argv: {shlex.join(spec['argv'])}")
 
 
 def rename(kernelspec: _PathLike, new_name: str) -> Path:
     """Rename a kernelspec"""
     kernelspec = locate(kernelspec)
-    print(kernelspec, kernelspec.parent)
-    dest = kernelspec.parent / new_name
-    print(kernelspec, kernelspec.parent, dest)
+    dest = Path(new_name)
+    if dest.name == new_name:
+        dest = kernelspec.parent / new_name
+    else:
+        dest = dest.absolute()
     log.info("Renaming %s -> %s", kernelspec, dest)
     kernelspec.rename(dest)
     return dest
@@ -190,7 +194,7 @@ def remove(kernelspec: _PathLike, force: bool = False) -> None:
     if not force:
         ans = input(f"Remove {kernelspec} [y/N]? ")
         if not ans.lower().startswith("y"):
-            print("Operation cancelled")
+            print("Operation cancelled", file=sys.stderr)
             return
     log.info(f"Removing {kernelspec}")
     shutil.rmtree(kernelspec)
@@ -209,3 +213,87 @@ def clone(kernelspec: _PathLike, to: _PathLike) -> Path:
         to = to.absolute()
     shutil.copytree(kernelspec, to)
     return to
+
+
+def env_kernel(
+    env: _PathLike,
+    kind: str,
+    kernel_name: str,
+    install_prefix: str | Path = "sys-prefix",
+):
+    """Register a kernel for a conda environment or virtualenv"""
+
+    env = Path(env)
+
+    if kind == "venv":
+        # todo: lookup venv by name
+        if not env.exists():
+            raise FileNotFoundError(
+                f"venvs must be resolvable paths, did not find env at {env}"
+            )
+        python_cmd = [str(env / "bin" / "python3")]
+        preamble = ["sh", "-c", 'source "${ENV_PREFIX}/bin/activate" && exec "$0" "$@"']
+
+    elif kind == "conda":
+        # TODO: support invoking via [micro]mamba
+        preamble = ["conda", "run", "--no-capture-output"]
+        if env.exists():
+            python_cmd = ["conda", "run", "-p", str(env), "python3"]
+            preamble += ["--prefix"]
+        else:
+            python_cmd = ["conda", "run", "-n", str(env), "python3"]
+            preamble += ["--name"]
+        preamble += [str(env)]
+
+    if install_prefix == "user":
+        install_data_dir = Path(paths.jupyter_data_dir())
+    elif install_prefix == "sys-prefix":
+        install_data_dir = Path(sys.prefix) / "share" / "jupyter"
+    else:
+        install_prefix = Path(install_prefix)
+        if not install_prefix.exists():
+            raise FileNotFoundError(f"No such prefix: {install_prefix}")
+        install_data_dir = Path(install_prefix) / "share" / "jupyter"
+
+    kernels_dir = install_data_dir / "kernels"
+
+    env_name = env.name
+    if not kernel_name:
+        kernel_name = f"{kind}-{env_name}"
+
+    kernel_dest = kernels_dir / kernel_name
+    if kernel_dest.exists():
+        sys.exit(f"Kernel already exists at {kernel_dest}")
+
+    log.info("Creating kernelspec for %s at %s", env_name, kernel_dest)
+
+    with TemporaryDirectory() as td:
+        envvars = os.environ.copy()
+        jupyter_path = Path(td) / "share/jupyter"
+        envvars["JUPYTER_PATH"] = str(jupyter_path)
+        cmd = python_cmd + [
+            "-m",
+            "ipykernel",
+            "install",
+            "--prefix",
+            str(td),
+            "--name",
+            kernel_name,
+        ]
+        log.debug("Calling %s", shlex.join(cmd))
+        check_output(cmd, env=envvars)
+        kernel_dir = jupyter_path / "kernels" / kernel_name
+        log.debug("Copying %s -> %s", kernel_dir, kernel_dest)
+        kernels_dir.mkdir(exist_ok=True, parents=True)
+        shutil.copytree(kernel_dir, kernel_dest)
+
+    # rewrite command to include env activation
+    spec = _read_kernelspec(kernel_dest)
+    if kind == "venv":
+        envvars = spec.setdefault("env", {})
+        envvars["ENV_PREFIX"] = str(env)
+    # strip prefix off of executable
+    spec["argv"][0] = Path(spec["argv"][0]).name
+    # activate env with preamble
+    spec["argv"] = preamble + spec["argv"]
+    _write_kernelspec(kernel_dest, spec)

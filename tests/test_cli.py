@@ -34,7 +34,16 @@ def cli_test(args, name, called_with=None):
     with ctx, mock.patch(f"a2km.operations.{name}") as mocked:
         main(args)
     if called_with is not None:
-        mocked.assert_called_with(*called_with)
+        if (
+            len(called_with) == 2
+            and isinstance(called_with[0], tuple)
+            and isinstance(called_with[1], dict)
+        ):
+            call_args, call_kwargs = called_with
+        else:
+            call_args = called_with
+            call_kwargs = {}
+        mocked.assert_called_with(*call_args, **call_kwargs)
     return mocked
 
 
@@ -141,3 +150,37 @@ def test_rm_argv(args, called_with):
 )
 def test_rm(args, called_with):
     cli_test(["rm"] + args, "remove", called_with)
+
+
+@pytest.mark.parametrize(
+    "args, called_with",
+    [
+        pytest.param(
+            ["env"],
+            (
+                ("env",),
+                {
+                    "kind": "conda",
+                    "kernel_name": "",
+                    "install_prefix": "sys-prefix",
+                },
+            ),
+            id="default",
+        ),
+        pytest.param(
+            ["env", "--name=mykernel", "--prefix", "user"],
+            (
+                ("env",),
+                {
+                    "kind": "conda",
+                    "kernel_name": "mykernel",
+                    "install_prefix": "user",
+                },
+            ),
+            id="default",
+        ),
+        pytest.param([], SystemExit, id="no args"),
+    ],
+)
+def test_env_kernel(args, called_with):
+    cli_test(["env-kernel"] + args, "env_kernel", called_with)

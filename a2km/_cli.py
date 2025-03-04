@@ -5,6 +5,7 @@ import logging
 import os
 import sys
 from functools import wraps
+from subprocess import CalledProcessError
 
 import a2km
 from a2km import operations
@@ -16,7 +17,7 @@ def _quieter_errors(f):
     def wrapped(*args, **kwargs):
         try:
             return f(*args, **kwargs)
-        except OSError as e:
+        except (OSError, CalledProcessError) as e:
             sys.exit(str(e))
 
     return wrapped
@@ -101,6 +102,21 @@ def main(argv=None):
         help="cli args to remove.",
     )
 
+    env_kernel = _subcommand(subparsers, "env-kernel")
+    env_kernel.add_argument("env", help="Path or name of an environment")
+    env_kernel.add_argument(
+        "--kind",
+        choices={"conda", "venv"},
+        default="conda",
+        help="The kind of environment",
+    )
+    env_kernel.add_argument("--name", default="", help="The kernel name to register")
+    env_kernel.add_argument(
+        "--prefix",
+        default="sys-prefix",
+        help="The install prefix. Can be 'user' for a per-user install 'sys-prefix' for the same installation prefix as the a2km tool (default), or a path to an installation prefix.",
+    )
+
     rm = _subcommand(subparsers, "rm", "remove")
     _kernelspec_arg(rm)
     rm.add_argument(
@@ -141,6 +157,13 @@ def main(argv=None):
         operations.add_argv(options.kernelspec, options.args)
     elif op is operations.remove_argv:
         operations.remove_argv(options.kernelspec, options.args)
+    elif op is operations.env_kernel:
+        operations.env_kernel(
+            options.env,
+            kind=options.kind,
+            kernel_name=options.name,
+            install_prefix=options.prefix,
+        )
     elif op is operations.remove:
         operations.remove(options.kernelspec, options.force)
     else:
