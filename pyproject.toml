@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "a2km"
-version = "0.2.0"
+version = "0.2.1"
 dynamic = ["readme", "dependencies"]
 description = "Assistent to the (Jupyter) Kernel Manager"
 authors = [{ name = "Min RK", email = "benjaminrk@gmail.com" }]
@@ -83,7 +83,7 @@ select = [
 github_url = "https://github.com/minrk/a2km"
 
 [tool.tbump.version]
-current = "0.2.0"
+current = "0.2.1"
 
 regex = '''
   (?P<major>\d+)
