@@ -52,7 +52,7 @@ def _patched_path() -> Generator[None]:
     # patch into SYSTEM_JUPYTER_PATH
     # so it's lowest priority
     with mock.patch(
-        "jupyter_core.paths.SYSTEM_JUPYTER_PATH", system_jupyter_path + extra_path
+        "jupyter_core.paths.SYSTEM_JUPYTER_PATH", extra_path + system_jupyter_path
     ):
         yield
 
