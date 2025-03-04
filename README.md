@@ -21,14 +21,14 @@ a2km rm-argv python3-copy -- debug
 
 ## Kernelspecs for environments
 
-**(not yet reimplemented in Python)**
-
 a2km has an `env-kernel` subcommand for creating kernelspecs for your conda or virtual environments.
-Just pass a2km the name of the env, and you should be set:
+Just pass a2km the name or path of the env, and you should be set:
 
 ```
 conda create -n myenv ipykernel
 a2km env-kernel myenv
+python3 -m venv myvenv
+a2km env-kernel myvenv --kind ./venv
 ```
 
 ## Commands

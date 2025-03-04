@@ -30,7 +30,7 @@ Tracker = "https://github.com/minrk/a2km/issues"
 a2km = "a2km._cli:main"
 
 [project.optional-dependencies]
-test = ["pytest", "pytest-cov"]
+test = ["pytest", "pytest-cov", "jupyter_client"]
 
 
 [tool.setuptools]
