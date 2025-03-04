@@ -239,7 +239,7 @@ def env_kernel(
                 f"venvs must be resolvable paths, did not find env at {env}"
             )
         python_cmd = [str(env / "bin" / "python3")]
-        preamble = ["sh", "-c", 'source "${ENV_PREFIX}/bin/activate" && exec "$0" "$@"']
+        preamble = ["sh", "-c", '. "${ENV_PREFIX}/bin/activate" && exec "$0" "$@"']
 
     elif kind == "conda":
         # TODO: support invoking via [micro]mamba
