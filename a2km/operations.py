@@ -15,6 +15,7 @@ from pathlib import Path
 from subprocess import check_output
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Any
+from unittest import mock
 
 from jupyter_core import paths
 
@@ -26,6 +27,36 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
+@contextmanager
+def _patched_path() -> Generator[None]:
+    """Patch jupyter_path with prefixes on $PATH
+
+    so all kernelspecs are likely to be found,
+    even when a2km is in its own env, e.g. with uvx/pipx
+    """
+    system_jupyter_path = paths.SYSTEM_JUPYTER_PATH
+    current_jupyter_path = paths.jupyter_path()
+    extra_path: list[str] = []
+    for bin in (os.environ.get("PATH") or os.defpath).split(os.pathsep):
+        bin_path = Path(bin)
+        # TODO: the windows way?
+        if bin_path.name == "bin":
+            prefix = bin_path.parent
+            jupyter_dir = prefix / "share" / "jupyter"
+            if (
+                jupyter_dir.exists()
+                and str(jupyter_dir) not in current_jupyter_path
+                and str(jupyter_dir) not in extra_path
+            ):
+                extra_path.append(str(jupyter_dir))
+    # patch into SYSTEM_JUPYTER_PATH
+    # so it's lowest priority
+    with mock.patch(
+        "jupyter_core.paths.SYSTEM_JUPYTER_PATH", extra_path + system_jupyter_path
+    ):
+        yield
+
+
 def locate(kernelspec: _PathLike) -> Path:
     """Resolve a kernelspec name to a path"""
 
@@ -33,7 +64,8 @@ def locate(kernelspec: _PathLike) -> Path:
     if kernelspec_path.exists():
         return kernelspec_path
 
-    kernels_path = paths.jupyter_path("kernels")
+    with _patched_path():
+        kernels_path = paths.jupyter_path("kernels")
     for kernels_dir in kernels_path:
         kernelspec_path = Path(kernels_dir) / kernelspec
         if kernelspec_path.exists():
