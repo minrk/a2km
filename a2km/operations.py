@@ -218,10 +218,17 @@ def clone(kernelspec: _PathLike, to: _PathLike) -> Path:
 def env_kernel(
     env: _PathLike,
     kind: str,
-    kernel_name: str,
-    install_prefix: str | Path = "sys-prefix",
+    kernel_name: str = "",
+    install_data_dir: str | Path = "",
+    install_prefix: str | Path = "",
 ):
-    """Register a kernel for a conda environment or virtualenv"""
+    """Register a kernel for a conda environment or virtualenv
+
+    install_data_dir is the entry on JUPYTER_PATH,
+    whereas install_prefix is the typical install prefix.
+    install_prefix="$prefix" is equivalent to
+    install_data_dir="$prefix/share/jupyter"
+    """
 
     env = Path(env)
 
@@ -245,15 +252,26 @@ def env_kernel(
             preamble += ["--name"]
         preamble += [str(env)]
 
+    if install_data_dir and install_prefix:
+        raise ValueError(
+            "Specify only one of install_data_dir and install_prefix, got {install_data_dir=}, {install_prefix=}"
+        )
+    if not install_prefix and not install_data_dir:
+        install_prefix = "sys-prefix"
+
     if install_prefix == "user":
         install_data_dir = Path(paths.jupyter_data_dir())
     elif install_prefix == "sys-prefix":
         install_data_dir = Path(sys.prefix) / "share" / "jupyter"
-    else:
+    elif install_prefix:
         install_prefix = Path(install_prefix)
         if not install_prefix.exists():
             raise FileNotFoundError(f"No such prefix: {install_prefix}")
         install_data_dir = Path(install_prefix) / "share" / "jupyter"
+    else:
+        install_data_dir = Path(install_data_dir)
+        if not install_data_dir.exists():
+            raise FileNotFoundError(f"No such dir: {install_data_dir}")
 
     kernels_dir = install_data_dir / "kernels"
 
@@ -297,3 +315,4 @@ def env_kernel(
     # activate env with preamble
     spec["argv"] = preamble + spec["argv"]
     _write_kernelspec(kernel_dest, spec)
+    return kernel_dest
