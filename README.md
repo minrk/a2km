@@ -48,4 +48,4 @@ set        Set a value in the kernelspec
 show       Show info about a kernelspec
 ```
 
-![Assistant TO the Kernel Manager](http://i.imgur.com/F0WLaYR.jpg)
+![Assistant TO the Kernel Manager](a2km.jpg)
